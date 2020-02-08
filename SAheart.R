@@ -1,99 +1,16 @@
-##gradientDescent
-GradientDescent <- function(X,y,stepSize,maxIterations)
-{
-  weightVector = matrix(0,nrow = ncol(X),ncol = 1)
-  weightMatrix = matrix(0,nrow = ncol(X),ncol = 1)
-  for(index in 1:maxIterations)
-  {
-    weightVector <- weightVector - stepSize * Grediant_Of_theta(X,y,weightVector)
-    #weightMatrix[,index] <- weightVector[,1]
-    weightMatrix <- cbind(weightMatrix,weightVector)
-  }
-  
-  weightMatrix <- weightMatrix[,-1]
-  return(weightMatrix)
-  #return(weightVector)
-}
 
-#grediant of theta
-Grediant_Of_theta <- function(X,y,theta)
-{
-  grediantTheta <- matrix(0,ncol = ncol(X), nrow = 1)
-  for( index in 1:nrow(X))
-  {
-    #exp(as.numeric(Training_Data_y[2,])%*%
-    #as.numeric(Training_Data_X[3,])%*%as.numeric(weightVector))
-    #up = (-1)*as.numeric(Training_Data_y[2,])%*%as.numeric(Training_Data_X[1,])
-    #up/numeric(exp)
-    tempy <- y[index]
-    tempX <- X[index,]
-    yValue <- as.numeric(tempy)
-    xValue <- as.numeric(tempX)
-    expValue <- yValue%*%xValue%*%as.numeric(theta)
-    upValue <- (-1)*yValue %*% xValue
-    grediantThetaOfOne <- upValue / as.numeric(exp(expValue) + 1)
-    grediantTheta <- grediantTheta + grediantThetaOfOne
-  }
-  
-  grediantTheta <- grediantTheta / nrow(X)
-  return(t(grediantTheta))
-}
 
-# error rate
-Error_rate <- function(Matrix,Matrix2)
-{
-  Validation_error_Matrix <- matrix(0,nrow = ncol(Matrix), ncol = 2)
-  for (index_col in 1:ncol(Matrix))
-  {
-    error <- 0
-    right <- 0
-    for (index_row in 1:nrow(Matrix))
-    {
-      if((as.numeric(Matrix[index_row,index_col])>0 & as.numeric(Matrix2[index_row,])==1)
-         ||(as.numeric(Matrix[index_row,index_col])<0 & as.numeric(Matrix2[index_row,])==-1))
-        
-      {
-        right <- right+1
-      }
-      else
-      {
-        error <- error+1
-      }
-    }
-    Validation_error_Matrix[index_col,1] <- error/(error+right)*100
-    Validation_error_Matrix[index_col,2] <- index_col
-  }
-  return(Validation_error_Matrix)
-}
+path="E:/R/data2"
+setwd(path)
+source('PredicatedFunction.R')
 
-#calcualte meanlogLoss
-GetMeanlogLoss_Matrix <- function(X,y,m,k){
-  
-  meanlogLoss_Matrix <- matrix(0, ncol = 2, nrow = k)
-  for(index_n in 1:k)
-  {
-    logLoss <- 0
-    for(index_m in 1:m){
-      
-      ExpValue <- (-1)*as.numeric(y[index_m,])%*%
-        as.numeric(X[index_m,index_n])
-      
-      OnelogLoss <- log(as.numeric(exp(ExpValue)) + 1)
-      
-      logLoss <- OnelogLoss + logLoss
-      
-    }
-    meanlogLoss <- logLoss / m
-    
-    meanlogLoss_Matrix[index_n,1] <- meanlogLoss
-    meanlogLoss_Matrix[index_n,2] <- index_n
-  }
-  return(meanlogLoss_Matrix)
-}
+path="E:/R/data2"
+setwd(path)
+source('GradientDescent.R')
 
-#Experiment spam
+#Experiment 
 
-# step 1:get the spam data
+# step 1:get the data
 Data_No_Scale <- data.table::fread('https://web.stanford.edu/~hastie/ElemStatLearn/datasets/SAheart.data')
 
 #step 2:data processing
@@ -178,7 +95,7 @@ for (index_row in 1:nrow(Data_No_Scale)){
   
   #get predicated value
   Training_Weight_Matrix <- GradientDescent(Training_Data_X,Training_Data_y,
-                                            0.5,300)
+                                            0.1,10)
   Training_Predication_Matrix <- as.matrix(Training_Data_X) %*% as.matrix(Training_Weight_Matrix)
   Validation_Predication_Matrix <- as.matrix(Validation_Data_X) %*% as.matrix(Training_Weight_Matrix)
   k <- ncol(Training_Predication_Matrix)
@@ -230,7 +147,7 @@ for (index_row in 1:nrow(Data_No_Scale)){
   Min_Training_Matrix  <- which(Training_MeanlogLoss_Matrix== min(Training_MeanlogLoss_Matrix),arr.ind = TRUE)
   Min_Training_Matrix_Col <- Min_Training_Matrix[1]
   
-  #5.3 get plot
+  #5.3  get plot
   loss_Matrix <- merge(Training_MeanlogLoss_Matrix,Validation_MeanlogLoss_Matrix,all = TRUE)
     ggplot(data = as.data.frame(loss_Matrix)) +
     geom_line(mapping = aes(x = iteration, y = meanlogLossT,col = "train")) +
@@ -239,6 +156,7 @@ for (index_row in 1:nrow(Data_No_Scale)){
     geom_point(aes(Min_Validation_Matrix_Col,as.numeric(Validation_MeanlogLoss_Matrix[Min_Validation_Matrix_Col,1])),col="red")+
     scale_colour_manual("",  breaks = c("validation", "train"),values = c("black", "red"))
   
+    #step 6 Make a table of error rates  
   Min_loss_Iteration <- which(Validation_MeanlogLoss_Matrix== min(Validation_MeanlogLoss_Matrix),
                               
                               arr.ind = TRUE) 
@@ -298,8 +216,6 @@ for (index_row in 1:nrow(Data_No_Scale)){
   Base_Testing_Error_Matrix <- Error_rate(Min_Base_Testing,Testing_Data_y)
   
   Base_Testing_Error <- as.numeric(Base_Testing_Error_Matrix[,1])
-  
-  #get table
   
   Error_Table <- matrix(c(Loss_Training_Error,Loss_Validation_Error,Loss_Testing_Error,
                           
